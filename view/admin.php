@@ -8,15 +8,10 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userRole = $_SESSION['user_role'];
-
 if ($userRole !== "admin") {
     $_SESSION["role_error"] = "Bạn không có quyền quản trị";
     header("Location: index.php");
     exit();
-}
-
-if (!isset($_SESSION['post_counter'])) {
-    $_SESSION['post_counter'] = 1; 
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
@@ -33,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     }
 
     $delete_sql->close();
-    $conn->close();
 }
 
 $sql = 'SELECT * FROM blog';
@@ -41,11 +35,14 @@ $result = $conn->query($sql);
 
 $posts = [];
 if ($result->num_rows > 0) {
+    $counter = 1;
     while ($row = $result->fetch_assoc()) {
-        $row['id'] = $_SESSION['post_counter']++; 
+        $row['counter_id'] = $counter++;
         $posts[] = $row;
     }
 }
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -59,7 +56,6 @@ if ($result->num_rows > 0) {
     <link rel="stylesheet" href="../public/css/admin_list.css">
     <link rel="stylesheet" href="../icons/themify-icons-font/themify-icons/themify-icons.css">
     <script src="https://kit.fontawesome.com/97f11440fd.js" crossorigin="anonymous"></script>
-
 </head>
 
 <body>
@@ -99,7 +95,7 @@ if ($result->num_rows > 0) {
                 <tbody>
                     <?php foreach ($posts as $post) { ?>
                     <tr>
-                        <td><?php echo $post['id']; ?></td>
+                        <td><?php echo $post['counter_id']; ?></td>
                         <td><?php echo $post['title']; ?></td>
                         <td class="img"><?php echo '<img style="width: 80px;" src="'. $post['img'] .'">'; ?></td>
                         <td><?php echo $post['short_description']; ?></td>

@@ -3,32 +3,30 @@ session_start();
 
 require "../config.php";
 
+// Kiểm tra người dùng đã đăng nhập chưa
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
+// Kiểm tra quyền quản trị
 $userRole = $_SESSION['user_role'];
-
 if ($userRole !== "admin") {
     $_SESSION["role_error"] = "Bạn không có quyền quản trị";
     header("Location: index.php");
     exit();
 }
 
-if (!isset($_SESSION['user_id_counter'])) {
-    $_SESSION['user_id_counter'] = 1; 
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     $user_id = $_POST['id'];
 
+    // Chuẩn bị câu lệnh xóa người dùng
     $delete_sql = $conn->prepare("DELETE FROM user WHERE id = ?");
     $delete_sql->bind_param("i", $user_id);
 
+    // Thực thi câu lệnh xóa
     if ($delete_sql->execute()) {
-        header("Location: userlist.php");
-        exit();
+        echo '<script>alert("Xóa người dùng thành công."); window.location.href = "userlist.php";</script>';
     } else {
         echo '<script>alert("Xóa người dùng thất bại. Vui lòng thử lại.");</script>';
         error_log("Xóa người dùng thất bại: " . $delete_sql->error);
@@ -37,13 +35,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     $delete_sql->close();
 }
 
+// Truy vấn tất cả người dùng
 $sql = "SELECT id, username, role FROM user";
 $result = $conn->query($sql);
 
 $users = [];
 if ($result->num_rows > 0) {
+    $counter = 1;
     while ($row = $result->fetch_assoc()) {
-        $row['id'] = $_SESSION['user_id_counter']++; 
+        $row['counter_id'] = $counter++;
         $users[] = $row;
     }
 }
@@ -93,7 +93,7 @@ $conn->close();
                 <tbody>
                     <?php foreach ($users as $user) { ?>
                     <tr>
-                        <td><?php echo $user['id']; ?></td>
+                        <td><?php echo $user['counter_id']; ?></td>
                         <td><?php echo $user['username']; ?></td>
                         <td><?php echo $user['role']; ?></td>
                         <td>
